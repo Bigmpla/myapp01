@@ -22,7 +22,7 @@
 					<uni-icons type="star" size="18" color="gray"></uni-icons>
 					<text>收藏</text>
 				</view>
-			</view>
+			</view>  
 			<!-- 运费 -->
 			<view class="trasfee">
 				快递：免运费
@@ -39,7 +39,25 @@
 </template>
 
 <script>
+	import { mapState ,mapMutations, mapGetters} from 'vuex'
 	export default {
+		computed: {
+			...mapState('m_cart',[]),
+			...mapGetters('m_cart',['total'])
+		},
+		watch: {
+			
+			total:{
+				handler(newVal){
+					const findResult = this.options.find(x => x.text ==='购物车')
+					if(findResult){
+						findResult.info = newVal
+					}
+				},
+				//页面加载后会立即调用
+				immediate: true
+			}
+		},
 		data() {
 			return {
 				goods_info:[],
@@ -48,7 +66,8 @@
 					text:'客服'
 				},{
 					icon:'cart',
-					text:'购物车'
+					text:'购物车',
+					info:0
 				}],
 				buttonGroup:[{
 					text:'加入购物车',
@@ -66,6 +85,7 @@
 			this.getGoodsDetail(goods_id)
 		},
 		methods:{
+			...mapMutations('m_cart',['addToCart']),
 			async getGoodsDetail(goods_id){
 				const {data:res} = await uni.$http.get('/api/public/v1/goods/detail',{goods_id})
 				if(res.meta.status !== 200)return uni.$showMsg()
@@ -87,6 +107,20 @@
 					uni.switchTab({
 						url:'/pages/Cart/Cart'
 					})
+				}
+			},
+			buttonClick(e){
+				if(e.content.text==='加入购物车'){
+					// 组织商品信息对象
+					const goods={
+						goods_id : this.goods_info.goods_id,
+						goods_name : this.goods_info.goods_name,
+						goods_price : this.goods_info.goods_price,
+						goods_count: 1,
+						goods_small_logo: this.goods_info.goods_small_logo,
+						goods_state:true
+					}
+					this.addToCart(goods)
 				}
 			}
 		}
